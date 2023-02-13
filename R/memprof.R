@@ -35,7 +35,7 @@ with_monitor <- function(expr, poll_interval = 0.1,
 #' @return A `memprof_monitor` object.
 #' @export
 monitor_from_log <- function(log_file) {
-  memory_used <- read.csv(log_file)
+  memory_used <- utils::read.csv(log_file)
   build_memprof_monitor(NULL, memory_used)
 }
 
@@ -84,7 +84,7 @@ monitor <- R6::R6Class(
         message("Monitor log doesn't exist")
         return()
       }
-      read.csv(private$filename)
+      utils::read.csv(private$filename)
     },
 
     stop = function(verbose = FALSE) {
@@ -155,15 +155,15 @@ validate_monitor_file <- function(monitor_file, overwrite) {
 
 #' Plot memprof monitor output
 #'
-#' @param obj The `memprof_monitor` object
+#' @param x The `memprof_monitor` object
 #'
 #' @return Nothing, creates a plot.
 #' @export
-plot.memprof_monitor <- function(obj) {
-  obj$memory_use$used <- obj$memory_use$used / 1e6
+plot.memprof_monitor <- function(x, ...) {
+  x$memory_use$used <- x$memory_use$used / 1e6
   withr::with_par(list(mar = c(4, 4, 1, 1)),
                   plot(used ~ time,
-                       obj$memory_use,
+                       x$memory_use,
                        xlab = "Time (s)",
                        ylab = "System used RAM (MB)",
                        type = "l",
