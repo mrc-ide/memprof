@@ -1,0 +1,70 @@
+---
+title: "memprof"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{memprof}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(memprof)
+```
+
+# Memory profiling
+
+memprof will evalute an R expression whilst profile the system memory usage over time.
+
+Create you have a function you want to monitor the memory for e.g.
+```{r}
+f <- function(msg) {
+  Sys.sleep(1)
+  z <- numeric(1e8) ## 800MB
+  Sys.sleep(1)
+  msg
+}
+```
+
+Profile it using memprof
+```{r}
+memprof <- with_monitor(f("hello"))
+```
+
+This will return an object with the result `memprof$result` and the profiling data `memprof$memory_use`. The memory_use data collected will depend on the OS used, see `?ps::ps_system_memory` for more details. 
+
+```{r}
+str(memprof$memory_use)
+```
+
+The profile can be plotted
+```{r, dpi = 150}
+plot(memprof)
+```
+
+# Profile a process which errors
+
+You can specify the file to write the memory usage logs to. You can use this to log memory usage of the system in a way which can be recovered if the expression you are evaluating might fail.
+
+```{r, dpi = 150}
+f <- function(msg) {
+  Sys.sleep(1)
+  z <- numeric(1e8) ## 800MB
+  Sys.sleep(1)
+  stop("An error")
+  msg
+}
+
+log_file <- tempfile()
+tryCatch(with_monitor(f(), monitor_file = log_file),
+         error = function(e) e)
+memprof <- monitor_from_log(log_file)
+
+plot(memprof)
+```
