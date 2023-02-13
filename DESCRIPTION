@@ -1,0 +1,16 @@
+Package: memprof
+Title: Profile memory over time of system or a process
+Version: 0.0.1
+Authors@R: 
+    person(given = "Robert", 
+           family = "Ashton", 
+           email = "r.ashton@imperial.ac.uk", 
+           role = c("aut", "cre"))
+Description: Profile memory over time of system or a process.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
