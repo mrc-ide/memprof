@@ -8,7 +8,7 @@ test_that("with_monitor can monitor memory", {
 
   memprof <- with_monitor(f("hello"))
 
-  expect_s3_class(memprof, "memprof_monitor")
+  expect_s3_class(memprof, "memprof_result")
   expect_equal(memprof$result, "hello")
   ## Available metrics depend on OS, so test against ps
   expected_names <- names(ps::ps_system_memory())
@@ -86,22 +86,30 @@ test_that("memprof can recover profile data from errored code", {
   log_file <- tempfile()
   tryCatch(with_monitor(f(), monitor_file = log_file),
            error = function(e) e)
-  memprof <- monitor_from_log(log_file)
+  memory_use <- monitor_read(log_file)
 
-  expect_s3_class(memprof, "memprof_monitor")
-  expect_null(memprof$result)
+  expect_s3_class(memory_use, "memprof_use")
+
   ## Available metrics depend on OS, so test against ps
   expected_names <- names(ps::ps_system_memory())
-  expect_setequal(colnames(memprof$memory_use),
+  expect_setequal(colnames(memory_use),
                   c("time", expected_names))
   ## Used must be present as this is used in plotting
-  expect_true("used" %in% colnames(memprof$memory_use))
+  expect_true("used" %in% colnames(memory_use))
 
   ## Check that memory has increased by "close to" expected amount
   ## there will be some variability here, especially as this is monitoring
   ## the memory on the whole system. Revisit this if it is a bit flaky
-  start_mem <- mean(memprof$memory_use[1:8, "used"])
-  rows <- nrow(memprof$memory_use)
-  end_mem <- mean(memprof$memory_use[(rows - 8):rows, "used"])
+  start_mem <- mean(memory_use[1:8, "used"])
+  rows <- nrow(memory_use)
+  end_mem <- mean(memory_use[(rows - 8):rows, "used"])
   expect_equal(end_mem - start_mem, 8e8, tolerance = 5e7)
+
+  ## Can plot a memprof_use object
+  t <- tempfile()
+  png(filename = t)
+  plot(memory_use)
+  dev.off()
+  ## Test that something has been generated successfully
+  expect_true(file.size(t) > 100)
 })

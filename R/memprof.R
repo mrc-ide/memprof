@@ -24,27 +24,29 @@ with_monitor <- function(expr, poll_interval = 0.1,
   on.exit(memory$stop())
   result <- force(expr)
   used <- memory$finish()
-  build_memprof_monitor(result, used)
+  as_memprof_result(result, as_memprof_use(used))
 }
 
 
-#' Build `memprof_monitor` object from log file which can be used for plotting.
+#' Read monitor log file as a `memprof_use` data frame for plotting.
 #'
-#' @param log_file Path to memprof log file.
+#' @param monitor_file Path to memprof monitor log file.
 #'
-#' @return A `memprof_monitor` object.
+#' @return A `memprof_use` data frame.
 #' @export
-monitor_from_log <- function(log_file) {
-  memory_used <- utils::read.csv(log_file)
-  build_memprof_monitor(NULL, memory_used)
+monitor_read <- function(monitor_file) {
+  as_memprof_use(utils::read.csv(monitor_file))
 }
 
+as_memprof_use <- function(obj) {
+  structure(obj, class = c("memprof_use", class(obj)))
+}
 
-build_memprof_monitor <- function(result, memory_used) {
+as_memprof_result <- function(result, memory_used) {
   structure(list(
     result = result,
     memory_use = memory_used
-  ), class = "memprof_monitor")
+  ), class = "memprof_result")
 }
 
 
@@ -153,20 +155,31 @@ validate_monitor_file <- function(monitor_file, overwrite) {
 }
 
 
-#' Plot memprof monitor output
+#' Plot memprof use data frame
 #'
-#' @param x The `memprof_monitor` object
+#' @param x The `memprof_use` data frame
 #'
 #' @return Nothing, creates a plot.
 #' @export
-plot.memprof_monitor <- function(x, ...) {
-  x$memory_use$used <- x$memory_use$used / 1e6
-  withr::with_par(list(mar = c(4, 4, 1, 1)),
-                  plot(used ~ time,
-                       x$memory_use,
-                       xlab = "Time (s)",
-                       ylab = "System used RAM (MB)",
-                       type = "l",
-                       lwd = 2,
-                       col = "#0055ff"))
+plot.memprof_use <- function(x, ...) {
+  x$used <- x$used / 1e6
+  op <- par(mar = c(4, 4, 1, 1))
+  on.exit(par(op))
+  plot(x$used,
+       x$time,
+       xlab = "Time (s)",
+       ylab = "System used RAM (MB)",
+       type = "l",
+       lwd = 2,
+       col = "#0055ff")
+}
+
+#' Plot memprof monitor result
+#'
+#' @param x The `memprof_result` object
+#'
+#' @return Nothing, creates a plot.
+#' @export
+plot.memprof_result <- function(x, ...) {
+  plot(x$memory_use)
 }
