@@ -40,7 +40,7 @@ memprof <- with_monitor(f("hello"))
 This will return an object with the result `memprof$result` and the profiling data `memprof$memory_use`. The memory_use data collected will depend on the OS used, see `?ps::ps_system_memory` for more details. 
 
 ```{r}
-str(memprof$memory_use)
+head(memprof$memory_use)
 ```
 
 The profile can be plotted
