@@ -61,10 +61,10 @@ f <- function(msg) {
   msg
 }
 
-log_file <- tempfile()
-tryCatch(with_monitor(f(), monitor_file = log_file),
+monitor_file <- tempfile()
+tryCatch(with_monitor(f(), monitor_file = monitor_file),
          error = function(e) e)
-memprof <- monitor_read(log_file)
+memory_use <- monitor_read(monitor_file)
 
-plot(memprof)
+plot(memory_use)
 ```
