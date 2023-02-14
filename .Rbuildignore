@@ -22,3 +22,5 @@
 ^\.github$
 \.*gcov$
 ^memprof.Rproj$
+^.*\.Rproj$
+^\.Rproj\.user$
