@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{The \code{memprof_result} object}
+
+\item{...}{Additional arguments passed on to plot}
 }
 \value{
 Nothing, creates a plot.

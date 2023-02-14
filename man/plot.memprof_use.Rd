@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{The \code{memprof_use} data frame}
+
+\item{...}{Additional arguments passed on to plot}
 }
 \value{
 Nothing, creates a plot.

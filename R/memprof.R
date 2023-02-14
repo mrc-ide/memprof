@@ -158,13 +158,14 @@ validate_monitor_file <- function(monitor_file, overwrite) {
 #' Plot memprof use data frame
 #'
 #' @param x The `memprof_use` data frame
+#' @param ... Additional arguments passed on to plot
 #'
 #' @return Nothing, creates a plot.
 #' @export
 plot.memprof_use <- function(x, ...) {
   x$used <- x$used / 1e6
-  op <- par(mar = c(4, 4, 1, 1))
-  on.exit(par(op))
+  op <- graphics::par(mar = c(4, 4, 1, 1))
+  on.exit(graphics::par(op))
   plot(x$used,
        x$time,
        xlab = "Time (s)",
@@ -177,6 +178,7 @@ plot.memprof_use <- function(x, ...) {
 #' Plot memprof monitor result
 #'
 #' @param x The `memprof_result` object
+#' @param ... Additional arguments passed on to plot
 #'
 #' @return Nothing, creates a plot.
 #' @export
