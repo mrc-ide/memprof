@@ -1,20 +1,29 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
 
 # memprof
 
 <!-- badges: start -->
-
-![R build
-status](https://github.com/mrc-ide/memprof/actions/workflows/R-CMD-check.yaml/badge.svg)
+![R build status](https://github.com/mrc-ide/memprof/actions/workflows/R-CMD-check.yaml/badge.svg)
 <!-- badges: end -->
 
 Evaluate an R expression whilst monitoring your system memory over time.
 
 ## Installation
 
-You can install the development version of memprof from
-[GitHub](https://github.com/) with:
+You can install the development version of memprof from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("remotes")
@@ -25,7 +34,7 @@ remotes::install_github("mrc-ide/memprof")
 
 To monitor system memory whilst executing a function:
 
-``` r
+```{r example}
 library(memprof)
 
 f <- function(msg) {
@@ -38,8 +47,6 @@ f <- function(msg) {
 out <- with_monitor(f("hello"))
 ```
 
-``` r
+```{r}
 plot(out)
 ```
-
-<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
