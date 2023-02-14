@@ -9,7 +9,7 @@ with_monitor(
   poll_interval = 0.1,
   monitor_file = tempfile(),
   overwrite = FALSE,
-  gc = TRUE
+  gc_first = TRUE
 )
 }
 \arguments{
@@ -23,7 +23,7 @@ tempfile by default.}
 
 \item{overwrite}{If TRUE then overwrite \code{monitor_file} if it exists already.}
 
-\item{gc}{If \code{TRUE} run a garbage collect before starting monitoring.}
+\item{gc_first}{If \code{TRUE} run a garbage collect before starting monitoring.}
 }
 \value{
 A \code{memprof_monitor} object containing the \code{result} as the outcome

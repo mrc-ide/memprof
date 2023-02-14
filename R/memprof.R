@@ -10,7 +10,7 @@
 #'   your expr errors to recover the output for later plotting. Uses a
 #'   tempfile by default.
 #' @param overwrite If TRUE then overwrite `monitor_file` if it exists already.
-#' @param gc If `TRUE` run a garbage collect before starting monitoring.
+#' @param gc_first If `TRUE` run a garbage collect before starting monitoring.
 #'
 #' @return A `memprof_monitor` object containing the `result` as the outcome
 #'   from the expression and `memory_use` the memory used
@@ -18,9 +18,9 @@
 with_monitor <- function(expr, poll_interval = 0.1,
                          monitor_file = tempfile(),
                          overwrite = FALSE,
-                         gc = TRUE) {
+                         gc_first = TRUE) {
   validate_monitor_file(monitor_file, overwrite)
-  memory <- monitor$new(monitor_file, poll_interval, gc)
+  memory <- monitor$new(monitor_file, poll_interval, gc_first)
   on.exit(memory$stop())
   result <- force(expr)
   used <- memory$finish()
@@ -60,10 +60,10 @@ monitor <- R6::R6Class(
   ),
 
   public = list(
-    initialize = function(filename, interval, gc) {
+    initialize = function(filename, interval, gc_first) {
       private$interval <- interval
       private$filename <- filename
-      if (isTRUE(gc)) {
+      if (isTRUE(gc_first)) {
         gc()
       }
       dir.create(dirname(filename), FALSE, TRUE)
