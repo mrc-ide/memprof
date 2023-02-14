@@ -1,10 +1,13 @@
 #' Run an R expression and monitor memory
 #'
 #' Evaluate an expression, and monitor the memory every `poll_interval`.
-#' This will monitor the memory of your entire system, not just the expression
-#' being run.
+#' This can monitor either the memory of your R expression and any processes
+#' it spawns or it can monitor the memory of your entire system.
 #'
 #' @param expr The expression to evaluate.
+#' @param mode The monitor mode to use, `process` to monitor the function
+#'   process and any spawned processes. `system` to monitor the memory
+#'   of the entire system.
 #' @param poll_interval Time between each check of memory use.
 #' @param monitor_file Path to log memory monitor to, you can use this if
 #'   your expr errors to recover the output for later plotting. Uses a
@@ -15,12 +18,15 @@
 #' @return A `memprof_monitor` object containing the `result` as the outcome
 #'   from the expression and `memory_use` the memory used
 #' @export
-with_monitor <- function(expr, poll_interval = 0.1,
+with_monitor <- function(expr,
+                         mode = "process",
+                         poll_interval = 0.1,
                          monitor_file = tempfile(),
                          overwrite = FALSE,
                          gc_first = TRUE) {
   validate_monitor_file(monitor_file, overwrite)
-  memory <- monitor$new(monitor_file, poll_interval, gc_first)
+  match_value(mode, c("process", "system"))
+  memory <- monitor$new(monitor_file, mode, poll_interval, gc_first)
   on.exit(memory$stop())
   result <- force(expr)
   used <- memory$finish()
@@ -55,21 +61,28 @@ monitor <- R6::R6Class(
 
   private = list(
     process = NULL,
+    mode = NULL,
     filename = NULL,
     interval = NULL
   ),
 
   public = list(
-    initialize = function(filename, interval, gc_first) {
+    initialize = function(filename, mode, interval, gc_first) {
+      private$mode <- mode
       private$interval <- interval
       private$filename <- filename
       if (isTRUE(gc_first)) {
         gc()
       }
       dir.create(dirname(filename), FALSE, TRUE)
+      this_process_id <- ps::ps_pid()
       private$process <- callr::r_bg(
-        function(interval) monitor_bg(interval),
-        list(interval = private$interval),
+        function(mode, this_process_id, interval) {
+          monitor_bg(mode, this_process_id, interval)
+        },
+        list(mode = private$mode,
+             this_process_id = this_process_id,
+             interval = private$interval),
         stdout = private$filename,
         package = "memprof")
       while (!file.exists(private$filename)) {
@@ -107,55 +120,76 @@ monitor <- R6::R6Class(
 )
 
 
-monitor_bg <- function(interval) {
-  t0 <- as.numeric(Sys.time())
-  system_memory <- function() {
-    c(list(time = as.numeric(Sys.time()) - t0), ps::ps_system_memory())
+monitor_bg <- function(mode, parent_process_id, interval) {
+  get_memory <- if (identical(mode, "system")) {
+    get_system_memory
+  } else {
+    get_process_memory(parent_process_id)
   }
-  print_header(system_memory())
+
+  t0 <- as.numeric(Sys.time())
+  memory_with_time <- function() {
+    mem <- get_memory()
+    time <- as.numeric(Sys.time()) - t0
+    lapply(mem, function(x) c(time = time, x))
+  }
+  print_header(memory_with_time())
   repeat {
-    print_log(system_memory())
+    print_log(memory_with_time())
     Sys.sleep(interval)
   }
 }
 
 
-print_header <- function(log) {
-  print_csv(names(log))
+get_system_memory <- function() {
+  list(ps::ps_system_memory())
 }
 
 
-print_log <- function(log) {
-  print_csv(unlist(log, FALSE, FALSE))
-}
-
-
-print_csv <- function(log) {
-  cat(paste(paste(log, collapse = ","), "\n"))
-}
-
-
-validate_monitor_file <- function(monitor_file, overwrite) {
-  if (!dir.exists(dirname(monitor_file))) {
-    stop(sprintf(paste0("Containing dir for monitor file '%s' must exist,",
-                        " create dir or review path."),
-                 monitor_file))
+get_process_memory <- function(parent_process_id) {
+  function() {
+    parent_process <- ps::ps_handle(parent_process_id)
+    children <- ps::ps_children(parent_process, recursive = TRUE)
+    processes <- c(parent_process, children)
+    mem_use <- lapply(processes, function(process) {
+      tryCatch({
+        mem <- as.list(ps::ps_memory_info(process))
+        c(list(id = ps::ps_pid(process),
+               parent_id = ps::ps_ppid(process)),
+          mem)},
+        error = function(e) {
+          ## If we're here the child process has probably been cleaned up
+          ## in between listing it and then trying to get the
+          ## memory from it. Ignore these cases
+          NULL
+        }
+      )
+    })
+    mem_use[vlapply(mem_use, function(x) !is.null(x))]
   }
-  if (file.exists(monitor_file)) {
-    if (isFALSE(overwrite)) {
-      stop(sprintf(paste0(
-        "Monitor file at '%s' already exists and overwrite",
-        " is 'FALSE'. Delete file or set overwrite to 'TRUE'."),
-        monitor_file))
-    } else {
-      unlist(monitor_file)
-    }
-  }
-  invisible(TRUE)
+}
+
+print_header <- function(logs) {
+  cat(log_to_csv(names(logs[[1]])))
+}
+
+
+print_log <- function(logs) {
+  logs <- vcapply(logs, function(log) log_to_csv(unlist(log, FALSE, FALSE)))
+  cat(paste0(logs, collapse = ""))
+}
+
+
+log_to_csv <- function(log) {
+  paste(paste(log, collapse = ","), "\n")
 }
 
 
 #' Plot memprof use data frame
+#'
+#' If a `system` memory log this prints the total system memory used.
+#' If a `process` memory log, it sums total memory of the process and any
+#' child process at each time point and plots the total
 #'
 #' @param x The `memprof_use` data frame
 #' @param ... Additional arguments passed on to plot
@@ -163,11 +197,14 @@ validate_monitor_file <- function(monitor_file, overwrite) {
 #' @return Nothing, creates a plot.
 #' @export
 plot.memprof_use <- function(x, ...) {
+  if ("id" %in% colnames(x)) {
+    x <- used_memory_total_by_time(x)
+  }
   x$used <- x$used / 1e6
   op <- graphics::par(mar = c(4, 4, 1, 1))
   on.exit(graphics::par(op))
-  plot(x$used,
-       x$time,
+  plot(x$time,
+       x$used,
        xlab = "Time (s)",
        ylab = "System used RAM (MB)",
        type = "l",
@@ -184,4 +221,10 @@ plot.memprof_use <- function(x, ...) {
 #' @export
 plot.memprof_result <- function(x, ...) {
   plot(x$memory_use)
+}
+
+used_memory_total_by_time <- function(data) {
+  agg <- aggregate(data$rss, by = list(time = data$time), FUN = sum)
+  colnames(agg) <- c("time", "used")
+  agg
 }
