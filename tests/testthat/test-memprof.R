@@ -6,6 +6,7 @@ test_that("with_monitor can monitor system memory", {
     msg
   }
 
+  gc()
   memprof <- with_monitor(f("hello"), mode = "system")
 
   expect_s3_class(memprof, "memprof_result")
@@ -26,7 +27,7 @@ test_that("with_monitor can monitor system memory", {
   start_mem <- mean(memprof$memory_use[1:8, "used"])
   rows <- nrow(memprof$memory_use)
   end_mem <- mean(memprof$memory_use[(rows - 8):rows, "used"])
-  expect_equal(end_mem - start_mem, 8e8, tolerance = 5e7)
+  expect_equal(end_mem - start_mem, 8e8, tolerance = 0.2)
 
   t <- tempfile()
   png(filename = t)
@@ -68,7 +69,7 @@ test_that("with_monitor can monitor process and child process memory", {
   ## Available metrics depend on OS, so test against ps
   expected_names <- names(ps::ps_memory_info())
   expect_setequal(colnames(memprof$memory_use),
-                  c("time", "id", "parent_id", expected_names))
+                  c("time", "id", "parent_id", "name", expected_names))
 
   ## All the processes are in the log
   ## We expect 4 processes, 1 for this process (running h), 1 for process
@@ -82,7 +83,7 @@ test_that("with_monitor can monitor process and child process memory", {
   start_mem <- mean(total_mem[1:8, "used"])
   rows <- nrow(total_mem)
   end_mem <- mean(total_mem[(rows - 8):rows, "used"])
-  expect_equal(end_mem - start_mem, 8e8, tolerance = 5e7)
+  expect_equal(end_mem - start_mem, 8e8, tolerance = 0.2)
 
   t <- tempfile()
   png(filename = t)
@@ -165,7 +166,7 @@ test_that("memprof can recover profile data from errored code", {
   start_mem <- mean(memory_use[1:8, "used"])
   rows <- nrow(memory_use)
   end_mem <- mean(memory_use[(rows - 8):rows, "used"])
-  expect_equal(end_mem - start_mem, 8e8, tolerance = 5e7)
+  expect_equal(end_mem - start_mem, 8e8, tolerance = 0.2)
 
   ## Can plot a memprof_use object
   t <- tempfile()

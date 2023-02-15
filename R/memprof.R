@@ -154,7 +154,8 @@ get_process_memory <- function() {
     tryCatch({
       mem <- as.list(ps::ps_memory_info(process))
       c(list(id = ps::ps_pid(process),
-             parent_id = ps::ps_ppid(process)),
+             parent_id = ps::ps_ppid(process),
+             name = ps::ps_name(process)),
         mem)},
       error = function(e) {
         ## If we're here the child process has probably been cleaned up
@@ -209,6 +210,9 @@ log_to_csv <- function(log) {
 plot.memprof_use <- function(x, ...) {
   if ("id" %in% colnames(x)) {
     x <- used_memory_total_by_time(x)
+    ylab <- "Process memory used (MB)"
+  } else {
+    ylab <- "System memory used (MB)"
   }
   x$used <- x$used / 1e6
   op <- graphics::par(mar = c(4, 4, 1, 1))
@@ -216,7 +220,7 @@ plot.memprof_use <- function(x, ...) {
   plot(x$time,
        x$used,
        xlab = "Time (s)",
-       ylab = "System used RAM (MB)",
+       ylab = ylab,
        type = "l",
        lwd = 2,
        col = "#0055ff")
@@ -234,7 +238,7 @@ plot.memprof_result <- function(x, ...) {
 }
 
 used_memory_total_by_time <- function(data) {
-  agg <- aggregate(data$rss, by = list(time = data$time), FUN = sum)
+  agg <- stats::aggregate(data$rss, by = list(time = data$time), FUN = sum)
   colnames(agg) <- c("time", "used")
   agg
 }

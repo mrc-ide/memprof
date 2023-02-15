@@ -20,7 +20,7 @@ library(memprof)
 
 # Memory profiling
 
-memprof will evalute an R expression whilst profile the system memory usage over time.
+memprof will evaluate an R expression whilst monitoring the processes memory and memory of any child process over time.
 
 Create you have a function you want to monitor the memory for e.g.
 ```{r}
@@ -35,6 +35,65 @@ f <- function(msg) {
 Profile it using memprof
 ```{r}
 memprof <- with_monitor(f("hello"))
+```
+
+This will return an object with the result `memprof$result` and the profiling data `memprof$memory_use`. The memory_use data collected will depend on the OS used, see `?ps::ps_memory_info` for more details. 
+
+```{r}
+head(memprof$memory_use)
+```
+
+The profile can be plotted
+```{r, dpi = 150}
+plot(memprof)
+```
+
+## Expressions which spawn child processes
+
+If your expression spawns any other processes, these will be included in the monitor output too, consider
+
+```{r}
+g <- function() {
+  
+  f <- function(msg) {
+    Sys.sleep(1)
+    z <- numeric(1e8) ## 800MB
+    Sys.sleep(1)
+    msg
+  }
+  
+  p <- callr::r_bg(f, list(msg = "hello from f"))
+  p$wait()
+  c("hello from g", p$get_result())
+}
+```
+
+Profile it using memprof
+```{r}
+memprof <- with_monitor(g())
+```
+
+Note the memory use data will contain two ids
+
+```{r}
+unique(memprof$memory_use$id)
+```
+
+The profile can be plotted, this will sum the memory for all the processes at each time point
+```{r, dpi = 150}
+plot(memprof)
+```
+
+
+# Profile total system memory
+
+```{r include = FALSE}
+gc()
+```
+
+You can also profile total system memory by using
+```{r}
+memprof <- with_monitor(f("hello"), mode = "system")
 ```
 
 This will return an object with the result `memprof$result` and the profiling data `memprof$memory_use`. The memory_use data collected will depend on the OS used, see `?ps::ps_system_memory` for more details. 
@@ -68,3 +127,4 @@ memory_use <- monitor_read(monitor_file)
 
 plot(memory_use)
 ```
+
