@@ -75,22 +75,14 @@ monitor <- R6::R6Class(
         gc()
       }
       dir.create(dirname(filename), FALSE, TRUE)
-      this_process_id <- ps::ps_pid()
+
       private$process <- callr::r_bg(
-        function(mode, this_process_id, interval) {
-          monitor_bg(mode, this_process_id, interval)
-        },
-        list(mode = private$mode,
-             this_process_id = this_process_id,
-             interval = private$interval),
+        function(mode, interval) monitor_bg(mode, interval),
+        list(mode = private$mode, interval = private$interval),
         stdout = private$filename,
         package = "memprof")
-      while (!file.exists(private$filename)) {
-        if (!private$process$is_alive()) {
-          stop("Failed to start monitor")
-        }
-        Sys.sleep(0.01)
-      }
+
+      wait_for_monitor_start(private$process, private$filename)
       invisible(TRUE)
     },
 
@@ -119,12 +111,21 @@ monitor <- R6::R6Class(
   )
 )
 
+wait_for_monitor_start <- function(process, filename) {
+  while (!file.exists(filename)) {
+    if (!process$is_alive()) {
+      stop("Failed to start monitor")
+    }
+    Sys.sleep(0.01)
+  }
+}
 
-monitor_bg <- function(mode, parent_process_id, interval) {
+
+monitor_bg <- function(mode, interval) {
   get_memory <- if (identical(mode, "system")) {
     get_system_memory
   } else {
-    get_process_memory(parent_process_id)
+    get_process_memory
   }
 
   t0 <- as.numeric(Sys.time())
@@ -146,28 +147,37 @@ get_system_memory <- function() {
 }
 
 
-get_process_memory <- function(parent_process_id) {
-  function() {
-    parent_process <- ps::ps_handle(parent_process_id)
-    children <- ps::ps_children(parent_process, recursive = TRUE)
-    processes <- c(parent_process, children)
-    mem_use <- lapply(processes, function(process) {
-      tryCatch({
-        mem <- as.list(ps::ps_memory_info(process))
-        c(list(id = ps::ps_pid(process),
-               parent_id = ps::ps_ppid(process)),
-          mem)},
-        error = function(e) {
-          ## If we're here the child process has probably been cleaned up
-          ## in between listing it and then trying to get the
-          ## memory from it. Ignore these cases
-          NULL
-        }
-      )
-    })
-    mem_use[vlapply(mem_use, function(x) !is.null(x))]
-  }
+get_process_memory <- function() {
+  processes <- processes_to_monitor()
+
+  mem_use <- lapply(processes, function(process) {
+    tryCatch({
+      mem <- as.list(ps::ps_memory_info(process))
+      c(list(id = ps::ps_pid(process),
+             parent_id = ps::ps_ppid(process)),
+        mem)},
+      error = function(e) {
+        ## If we're here the child process has probably been cleaned up
+        ## in between listing it and then trying to get the
+        ## memory from it. Ignore these cases
+        NULL
+      }
+    )
+  })
+  mem_use[vlapply(mem_use, function(x) !is.null(x))]
 }
+
+processes_to_monitor <- function() {
+  parent_process <- ps::ps_parent()
+  all_children <- ps::ps_children(parent_process, recursive = TRUE)
+  processes <- c(parent_process, all_children)
+  monitor_pid <- ps::ps_pid()
+  monitor_process <- vlapply(processes, function(process) {
+    ps::ps_pid(process) == monitor_pid
+  })
+  processes[!monitor_process]
+}
+
 
 print_header <- function(logs) {
   cat(log_to_csv(names(logs[[1]])))

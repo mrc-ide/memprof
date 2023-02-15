@@ -72,8 +72,8 @@ test_that("with_monitor can monitor process and child process memory", {
 
   ## All the processes are in the log
   ## We expect 4 processes, 1 for this process (running h), 1 for process
-  ## running g, 1 for process running f and 1 for process running the monitor
-  expect_length(unique(memprof$memory_use$id), 4)
+  ## running g and 1 for process running f
+  expect_length(unique(memprof$memory_use$id), 3)
 
   ## Check that memory has increased by "close to" expected amount
   ## there will be some variability here, especially as this is monitoring
