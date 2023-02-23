@@ -144,6 +144,7 @@ test_that("memprof can recover profile data from errored code", {
     stop("An error")
     msg
   }
+  gc()
 
   log_file <- tempfile()
   tryCatch(with_monitor(f(), mode = "system", monitor_file = log_file),
