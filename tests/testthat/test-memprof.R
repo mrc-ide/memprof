@@ -70,6 +70,14 @@ test_that("with_monitor can monitor process and child process memory", {
   expect_setequal(colnames(memprof$memory_use),
                   c("time", "id", "parent_id", "name", expected_names))
 
+  ## On windows we can't test number of processes as windows also spawns a
+  ## bunch of conhost.exe processes (started by processesx?) so this
+  ## number is higher than we expect on windows.
+  ## The number of memory log entries will also be much fewer as getting all
+  ## child processes on windows is very slow ~0.8s so runnin f which
+  ## takes ~2s will only produce 2 time points.
+  skip_on_os("windows")
+
   ## All the processes are in the log
   ## We expect 4 processes, 1 for this process (running h), 1 for process
   ## running g and 1 for process running f
