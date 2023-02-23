@@ -56,7 +56,7 @@ f <- function(msg) {
 out <- with_monitor(f("hello"))
 ```
 
-```{r}
+```{r process_plot}
 plot(out)
 ```
 
@@ -67,6 +67,6 @@ To monitor system memory:
 out <- with_monitor(f("hello"), mode = "system")
 ```
 
-```{r}
+```{r system_plot}
 plot(out)
 ```

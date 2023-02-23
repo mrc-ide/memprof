@@ -56,7 +56,7 @@ out <- with_monitor(f("hello"))
 plot(out)
 ```
 
-<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
+<img src="man/figures/README-process_plot-1.png" width="100%" />
 
 To monitor system memory:
 
@@ -68,4 +68,4 @@ out <- with_monitor(f("hello"), mode = "system")
 plot(out)
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+<img src="man/figures/README-system_plot-1.png" width="100%" />

@@ -44,7 +44,7 @@ head(memprof$memory_use)
 ```
 
 The profile can be plotted
-```{r, dpi = 150}
+```{r, function_profile, dpi = 150}
 plot(memprof)
 ```
 
@@ -80,7 +80,7 @@ unique(memprof$memory_use$id)
 ```
 
 The profile can be plotted, this will sum the memory for all the processes at each time point
-```{r, dpi = 150}
+```{r, child_profile, dpi = 150}
 plot(memprof)
 ```
 
@@ -103,7 +103,7 @@ head(memprof$memory_use)
 ```
 
 The profile can be plotted
-```{r, dpi = 150}
+```{r, system_profile, dpi = 150}
 plot(memprof)
 ```
 
@@ -111,7 +111,7 @@ plot(memprof)
 
 You can specify the file to write the memory usage logs to. You can use this to log memory usage of the system in a way which can be recovered if the expression you are evaluating might fail.
 
-```{r, dpi = 150}
+```{r, recover_monitor, dpi = 150}
 f <- function(msg) {
   Sys.sleep(1)
   z <- numeric(1e8) ## 800MB
