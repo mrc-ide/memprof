@@ -6,7 +6,6 @@ test_that("with_monitor can monitor system memory", {
     msg
   }
 
-  gc()
   memprof <- with_monitor(f("hello"), mode = "system")
 
   expect_s3_class(memprof, "memprof_result")
