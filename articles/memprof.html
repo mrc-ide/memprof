@@ -74,8 +74,8 @@
 <div class="section level2">
 <h2 id="memory-profiling">Memory profiling<a class="anchor" aria-label="anchor" href="#memory-profiling"></a>
 </h2>
-<p>memprof will evalute an R expression whilst profile the system memory
-usage over time.</p>
+<p>memprof will evaluate an R expression whilst monitoring the processes
+memory and memory of any child process over time.</p>
 <p>Create you have a function you want to monitor the memory for
 e.g.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -91,28 +91,92 @@ e.g.</p>
 <p>This will return an object with the result
 <code>memprof$result</code> and the profiling data
 <code>memprof$memory_use</code>. The memory_use data collected will
-depend on the OS used, see <code><a href="https://ps.r-lib.org/reference/ps_system_memory.html" class="external-link">?ps::ps_system_memory</a></code> for more
+depend on the OS used, see <code><a href="https://ps.r-lib.org/reference/ps_memory_info.html" class="external-link">?ps::ps_memory_info</a></code> for more
 details.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">memprof</span><span class="op">$</span><span class="va">memory_use</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          time      total      avail  percent      used       free    active</span></span>
-<span><span class="co">#&gt; 1 0.008756638 7281274880 6003646464 17.54677 944025600 2858663936 940941312</span></span>
-<span><span class="co">#&gt; 2 0.109857798 7281274880 6003392512 17.55026 944279552 2858405888 940982272</span></span>
-<span><span class="co">#&gt; 3 0.211389542 7281274880 6003134464 17.55380 944537600 2858147840 940982272</span></span>
-<span><span class="co">#&gt; 4 0.312881947 7281274880 6002876416 17.55734 944795648 2857889792 940982272</span></span>
-<span><span class="co">#&gt; 5 0.414445400 7281274880 6002876416 17.55734 944795648 2857889792 940982272</span></span>
-<span><span class="co">#&gt; 6 0.515959024 7281274880 6002618368 17.56089 945053696 2857631744 940982272</span></span>
-<span><span class="co">#&gt;     inactive   buffers     cached  shared      slab</span></span>
-<span><span class="co">#&gt; 1 2756714496 308592640 3169992704 7368704 574050304</span></span>
-<span><span class="co">#&gt; 2 2757033984 308592640 3169996800 7368704 574050304</span></span>
-<span><span class="co">#&gt; 3 2757279744 308592640 3169996800 7368704 574050304</span></span>
-<span><span class="co">#&gt; 4 2757464064 308592640 3169996800 7368704 574050304</span></span>
-<span><span class="co">#&gt; 5 2757709824 308592640 3169996800 7368704 574050304</span></span>
-<span><span class="co">#&gt; 6 2757947392 308592640 3169996800 7368704 574050304</span></span></code></pre></div>
+<span><span class="co">#&gt;         time   id parent_id name       rss       vms   shared text lib</span></span>
+<span><span class="co">#&gt; 1 0.02685332 6804      6611    R 108302336 443707392 27893760 4096   0</span></span>
+<span><span class="co">#&gt; 2 0.13708138 6804      6611    R 108302336 443707392 27893760 4096   0</span></span>
+<span><span class="co">#&gt; 3 0.24741435 6804      6611    R 108302336 443707392 27893760 4096   0</span></span>
+<span><span class="co">#&gt; 4 0.36306906 6804      6611    R 108302336 443707392 27893760 4096   0</span></span>
+<span><span class="co">#&gt; 5 0.47190404 6804      6611    R 108302336 443707392 27893760 4096   0</span></span>
+<span><span class="co">#&gt; 6 0.58105874 6804      6611    R 108302336 443707392 27893760 4096   0</span></span>
+<span><span class="co">#&gt;        data dirty</span></span>
+<span><span class="co">#&gt; 1 320151552     0</span></span>
+<span><span class="co">#&gt; 2 320151552     0</span></span>
+<span><span class="co">#&gt; 3 320151552     0</span></span>
+<span><span class="co">#&gt; 4 320151552     0</span></span>
+<span><span class="co">#&gt; 5 320151552     0</span></span>
+<span><span class="co">#&gt; 6 320151552     0</span></span></code></pre></div>
 <p>The profile can be plotted</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">memprof</span><span class="op">)</span></span></code></pre></div>
-<p><img src="memprof_files/figure-html/unnamed-chunk-5-1.png" width="1093.75"></p>
+<p><img src="memprof_files/figure-html/function_profile-1.png" width="1093.75"></p>
+<div class="section level3">
+<h3 id="expressions-which-spawn-child-processes">Expressions which spawn child processes<a class="anchor" aria-label="anchor" href="#expressions-which-spawn-child-processes"></a>
+</h3>
+<p>If your expression spawns any other processes, these will be included
+in the monitor output too, consider</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  </span>
+<span>  <span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">msg</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/Sys.sleep.html" class="external-link">Sys.sleep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span>    <span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1e8</span><span class="op">)</span> <span class="co">## 800MB</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/Sys.sleep.html" class="external-link">Sys.sleep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span>    <span class="va">msg</span></span>
+<span>  <span class="op">}</span></span>
+<span>  </span>
+<span>  <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">callr</span><span class="fu">::</span><span class="fu"><a href="https://callr.r-lib.org/reference/r_bg.html" class="external-link">r_bg</a></span><span class="op">(</span><span class="va">f</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>msg <span class="op">=</span> <span class="st">"hello from f"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">p</span><span class="op">$</span><span class="fu">wait</span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hello from g"</span>, <span class="va">p</span><span class="op">$</span><span class="fu">get_result</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>Profile it using memprof</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">memprof</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/with_monitor.html">with_monitor</a></span><span class="op">(</span><span class="fu">g</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Note the memory use data will contain two ids</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">memprof</span><span class="op">$</span><span class="va">memory_use</span><span class="op">$</span><span class="va">id</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 6804 6854</span></span></code></pre></div>
+<p>The profile can be plotted, this will sum the memory for all the
+processes at each time point</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">memprof</span><span class="op">)</span></span></code></pre></div>
+<p><img src="memprof_files/figure-html/child_profile-1.png" width="1093.75"></p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="profile-total-system-memory">Profile total system memory<a class="anchor" aria-label="anchor" href="#profile-total-system-memory"></a>
+</h2>
+<p>You can also profile total system memory by using</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">memprof</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/with_monitor.html">with_monitor</a></span><span class="op">(</span><span class="fu">f</span><span class="op">(</span><span class="st">"hello"</span><span class="op">)</span>, mode <span class="op">=</span> <span class="st">"system"</span><span class="op">)</span></span></code></pre></div>
+<p>This will return an object with the result
+<code>memprof$result</code> and the profiling data
+<code>memprof$memory_use</code>. The memory_use data collected will
+depend on the OS used, see <code><a href="https://ps.r-lib.org/reference/ps_system_memory.html" class="external-link">?ps::ps_system_memory</a></code> for more
+details.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">memprof</span><span class="op">$</span><span class="va">memory_use</span><span class="op">)</span></span>
+<span><span class="co">#&gt;          time      total      avail  percent      used       free    active</span></span>
+<span><span class="co">#&gt; 1 0.009918213 7281274880 6094315520 16.30153 853356544 2896711680 939388928</span></span>
+<span><span class="co">#&gt; 2 0.111534357 7281274880 6093611008 16.31121 854061056 2895994880 939393024</span></span>
+<span><span class="co">#&gt; 3 0.213096380 7281274880 6093361152 16.31464 854310912 2895736832 939401216</span></span>
+<span><span class="co">#&gt; 4 0.314790964 7281274880 6093103104 16.31818 854568960 2895478784 939401216</span></span>
+<span><span class="co">#&gt; 5 0.416483879 7281274880 6092845056 16.32173 854827008 2895220736 939401216</span></span>
+<span><span class="co">#&gt; 6 0.518216848 7281274880 6092587008 16.32527 855085056 2894962688 939401216</span></span>
+<span><span class="co">#&gt;     inactive   buffers     cached  shared      slab</span></span>
+<span><span class="co">#&gt; 1 2720354304 304394240 3226812416 7368704 574873600</span></span>
+<span><span class="co">#&gt; 2 2720669696 304394240 3226824704 7368704 574906368</span></span>
+<span><span class="co">#&gt; 3 2720903168 304402432 3226824704 7368704 574840832</span></span>
+<span><span class="co">#&gt; 4 2721087488 304402432 3226824704 7368704 574840832</span></span>
+<span><span class="co">#&gt; 5 2721325056 304402432 3226824704 7368704 574840832</span></span>
+<span><span class="co">#&gt; 6 2721562624 304402432 3226824704 7368704 574840832</span></span></code></pre></div>
+<p>The profile can be plotted</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">memprof</span><span class="op">)</span></span></code></pre></div>
+<p><img src="memprof_files/figure-html/system_profile-1.png" width="1093.75"></p>
 </div>
 <div class="section level2">
 <h2 id="profile-a-process-which-errors">Profile a process which errors<a class="anchor" aria-label="anchor" href="#profile-a-process-which-errors"></a>
@@ -120,7 +184,7 @@ details.</p>
 <p>You can specify the file to write the memory usage logs to. You can
 use this to log memory usage of the system in a way which can be
 recovered if the expression you are evaluating might fail.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">msg</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/Sys.sleep.html" class="external-link">Sys.sleep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span>  <span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1e8</span><span class="op">)</span> <span class="co">## 800MB</span></span>
@@ -136,7 +200,7 @@ recovered if the expression you are evaluating might fail.</p>
 <span><span class="va">memory_use</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/monitor_read.html">monitor_read</a></span><span class="op">(</span><span class="va">monitor_file</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">memory_use</span><span class="op">)</span></span></code></pre></div>
-<p><img src="memprof_files/figure-html/unnamed-chunk-6-1.png" width="1093.75"></p>
+<p><img src="memprof_files/figure-html/recover_monitor-1.png" width="1093.75"></p>
 </div>
   </div>
 
