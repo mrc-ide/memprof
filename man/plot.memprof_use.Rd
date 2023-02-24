@@ -15,5 +15,7 @@
 Nothing, creates a plot.
 }
 \description{
-Plot memprof use data frame
+If a \code{system} memory log this prints the total system memory used.
+If a \code{process} memory log, it sums total memory of the process and any
+child process at each time point and plots the total
 }

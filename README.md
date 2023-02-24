@@ -9,7 +9,8 @@
 status](https://github.com/mrc-ide/memprof/actions/workflows/R-CMD-check.yaml/badge.svg)
 <!-- badges: end -->
 
-Evaluate an R expression whilst monitoring your system memory over time.
+Evaluate an R expression whilst monitoring the process or your system
+memory over time.
 
 ## Installation
 
@@ -23,7 +24,7 @@ remotes::install_github("mrc-ide/memprof")
 
 ## Example
 
-To monitor system memory whilst executing a function:
+To monitor process memory including any spawned child processes:
 
 ``` r
 library(memprof)
@@ -42,4 +43,16 @@ out <- with_monitor(f("hello"))
 plot(out)
 ```
 
-<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
+<img src="man/figures/README-process_plot-1.png" width="100%" />
+
+To monitor system memory:
+
+``` r
+out <- with_monitor(f("hello"), mode = "system")
+```
+
+``` r
+plot(out)
+```
+
+<img src="man/figures/README-system_plot-1.png" width="100%" />

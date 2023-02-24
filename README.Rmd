@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 ![R build status](https://github.com/mrc-ide/memprof/actions/workflows/R-CMD-check.yaml/badge.svg)
 <!-- badges: end -->
 
-Evaluate an R expression whilst monitoring your system memory over time.
+Evaluate an R expression whilst monitoring the process or your system memory over time.
 
 ## Installation
 
@@ -32,9 +32,9 @@ remotes::install_github("mrc-ide/memprof")
 
 ## Example
 
-To monitor system memory whilst executing a function:
+To monitor process memory including any spawned child processes:
 
-```{r example}
+```{r process}
 library(memprof)
 
 f <- function(msg) {
@@ -47,6 +47,17 @@ f <- function(msg) {
 out <- with_monitor(f("hello"))
 ```
 
-```{r}
+```{r process_plot}
+plot(out)
+```
+
+
+To monitor system memory:
+
+```{r system}
+out <- with_monitor(f("hello"), mode = "system")
+```
+
+```{r system_plot}
 plot(out)
 ```

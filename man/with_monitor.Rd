@@ -6,6 +6,7 @@
 \usage{
 with_monitor(
   expr,
+  mode = "process",
   poll_interval = 0.1,
   monitor_file = tempfile(),
   overwrite = FALSE,
@@ -15,7 +16,11 @@ with_monitor(
 \arguments{
 \item{expr}{The expression to evaluate.}
 
-\item{poll_interval}{Time between each check of memory use.}
+\item{mode}{The monitor mode to use, \code{process} to monitor the function
+process and any spawned processes. \code{system} to monitor the memory
+of the entire system.}
+
+\item{poll_interval}{Time between each check of memory use in seconds.}
 
 \item{monitor_file}{Path to log memory monitor to, you can use this if
 your expr errors to recover the output for later plotting. Uses a
@@ -31,6 +36,12 @@ from the expression and \code{memory_use} the memory used
 }
 \description{
 Evaluate an expression, and monitor the memory every \code{poll_interval}.
-This will monitor the memory of your entire system, not just the expression
-being run.
+This can monitor either the memory of your R expression and any processes
+it spawns or it can monitor the memory of your entire system.
+}
+\details{
+Note if using \code{process} monitor on windows it is best to set a long
+\code{poll_interval} of ~ 5s. This is because getting all the child
+processes of a process is quite a slow and CPU intensive task on windows
+meaning it will slow down execution if run too frequently.
 }
