@@ -12,19 +12,6 @@ status](https://github.com/mrc-ide/memprof/actions/workflows/R-CMD-check.yaml/ba
 Evaluate an R expression whilst monitoring the process or your system
 memory over time.
 
-## Requirements
-
-This requires the development version of `ps` to render the plot with
-accurate numbers for memory use if monitoring a process and not the
-whole system. At time of writing CRAN version of `ps` reports memory
-size from `ps_memory_info` in pages, development version reports in
-bytes. Install the development version using
-
-``` r
-# install.packages("remotes")
-remotes::install_github("r-lib/ps")
-```
-
 ## Installation
 
 You can install the development version of memprof from
